@@ -6,9 +6,10 @@ services:
       context: ./ui
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - 8080:8080
     volumes:
-      - ".:/opt/app"
+      - .:/opt/app
+      - node_modules:/opt/app/node_modules
   api:
     build:
       context: ./api
@@ -29,3 +30,5 @@ services:
   #   image: postgres
   # queue:
   #   image: rabbitmq
+volumes:
+  node_modules:
