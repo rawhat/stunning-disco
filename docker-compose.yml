@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ".:/opt/app"
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    # depends_on:
+    #   - ui
+    #   - db
+    #   - queue
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     - queue
+  # db:
+  #   image: postgres
+  # queue:
+  #   image: rabbitmq
