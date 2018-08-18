@@ -16,6 +16,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - ./api:/opt/app
     # depends_on:
     #   - ui
     #   - db

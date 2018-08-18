@@ -7,7 +7,7 @@ import (
 
 func sayHello(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
-	w.Write([]byte("Hello, world!"))
+	w.Write([]byte("Hello world!"))
 }
 
 func enableCors(w *http.ResponseWriter) {
