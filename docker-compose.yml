@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 services:
   ui:
@@ -8,8 +8,8 @@ services:
     ports:
       - 8080:8080
     volumes:
-      - .:/opt/app
-      - node_modules:/opt/app/node_modules
+      - ./ui:/opt/app
+      - /opt/app/node_modules
   api:
     build:
       context: ./api
@@ -30,5 +30,3 @@ services:
   #   image: postgres
   # queue:
   #   image: rabbitmq
-volumes:
-  node_modules:

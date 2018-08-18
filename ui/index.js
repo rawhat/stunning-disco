@@ -5,13 +5,15 @@ import {render} from 'react-dom'
 class App extends React.Component {
 
   async componentDidMount() {
-    const res = await fetch('http://api:3000/')
-    const body = await res.json()
+    const res = await fetch('http://localhost:3000/')
+    const body = await res.text()
     console.log('body is', body)
   }
 
   render() {
-    <div>Hello world</div>
+    return (
+      <div>Hello world</div>
+    )
   }
 }
 

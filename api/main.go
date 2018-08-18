@@ -6,7 +6,12 @@ import (
 )
 
 func sayHello(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	w.Write([]byte("Hello, world!"))
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func main() {
