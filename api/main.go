@@ -45,12 +45,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Headers", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "*")
 }
 
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", SayHello).Methods("GET")
-	router.HandleFunc("/login", Login).Methods("POST")
+	router.HandleFunc("/login", Login).Methods("POST", "OPTIONS")
 	if err := http.ListenAndServe(":3000", router); err != nil {
 		panic(err)
 	}
