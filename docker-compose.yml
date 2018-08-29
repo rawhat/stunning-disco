@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  ui:
+   ui:
     build:
       context: ./ui
       dockerfile: Dockerfile
@@ -19,17 +19,21 @@ services:
       - "3001:3001"
     volumes:
       - ./api:/opt/app
-    # depends_on:
-    #   - ui
-    #   - db
-    #   - queue
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   depends_on:
-  #     - queue
+    depends_on:
+      - ui
+      - db
+      - queue
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      - queue
+    volumes:
+      - ./backend:/opt/app
   # db:
   #   image: postgres
-  # queue:
-  #   image: rabbitmq
+  queue:
+    image: rabbitmq
+    ports:
+      - "5672:5672"
