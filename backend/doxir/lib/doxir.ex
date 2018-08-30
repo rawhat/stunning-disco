@@ -19,10 +19,10 @@ defmodule Doxir do
   @images_url "#{@base_url}/images"
 
   def pull_images do
-    HTTPoison.get! "#{@images_url}/create?fromImage=node:latest"
-    HTTPoison.get! "#{@images_url}/create?fromImage=python:latest"
+    HTTPotion.get! "#{@images_url}/create?fromImage=node:latest"
+    HTTPotion.get! "#{@images_url}/create?fromImage=python:latest"
     # TODO: not working.  404?
-    #HTTPoison.get! "#{@images_url}/create?repo=frolvlad/alpine-gcc"
+    #HTTPotion.get! "#{@images_url}/create?repo=frolvlad/alpine-gcc"
   end
 
   def init_containers do
@@ -30,39 +30,45 @@ defmodule Doxir do
   end
 
   def list_containers do
-    %HTTPoison.Response{body: body} = HTTPoison.get! "#{@containers_url}/json"
+    %HTTPotion.Response{body: body} = HTTPoison.get! "#{@containers_url}/json"
     Poison.decode body
   end
 
-  def exec_node(script) do
+  def exec_node(script, username \\ "test") do
     Poison.encode!(%{"Image" => "node:latest", "Cmd" => Doxir.get_node_exec(script)})
       |> Doxir.exec_in_container
   end
 
-  def exec_python(script) do
+  def exec_python(script, username \\ "test") do
     Poison.encode!(%{"Image" => "python:latest", "Cmd" => Doxir.get_python_exec(script)})
       |> Doxir.exec_in_container
   end
 
-  def exec_c(script) do
+  def exec_c(script, username \\ "test") do
     Poison.encode!(%{"Image" => "frolvlad/alpine-gcc:latest", "Cmd" => Doxir.get_c_exec(script)})
       |> Doxir.exec_in_container
   end
 
   def exec_in_container(create) do
-    %HTTPoison.Response{body: body} = Doxir.post_json "#{@containers_url}/create", create
+    %HTTPotion.Response{body: body} = Doxir.post_json "#{@containers_url}/create", create
     id = Poison.decode!(body)
       |> Map.get("Id")
     Doxir.post_json "#{@containers_url}/#{id}/start"
     :timer.sleep(1000)
-    %HTTPoison.AsyncResponse{id: async_id} =
-      HTTPoison.get!(Doxir.get_log_url(id), %{}, stream_to: self())
+    %HTTPotion.AsyncResponse{id: async_id} =
+      HTTPotion.get!(Doxir.get_log_url(id), [stream_to: self()])
     {:ok, %{body: response}} = Doxir.collect_response(async_id, self(), <<>>)
-    response
+    logs = response
       |> String.trim
       |> String.split("\n")
       |> Enum.map(&(String.slice(&1, 8..-1)))
       |> Enum.join("\n")
+    IO.inspect logs
+    Doxir.push_logs_to_queue(logs, "test")
+  end
+
+  def push_logs_to_queue(logs, username) do
+    IO.puts "done!"
   end
 
   def parse_script script do
@@ -96,23 +102,48 @@ defmodule Doxir do
 
   def post_json url, msg \\ nil do
     body = if msg != nil, do: msg, else: Poison.encode!(%{})
-    HTTPoison.post! url, body, [{:"Content-Type", "application/json"}]
+    HTTPotion.post! url, [body: body, headers: ["Content-Type": "application/json"]]
   end
 
   def get url do
-    HTTPoison.get! url
+    HTTPotion.get! url
   end
 
   def collect_response(id, par, data) do
     receive do
-      %HTTPoison.AsyncStatus{id: ^id, code: 200} ->
+      %HTTPotion.AsyncHeaders{id: ^id, headers: _} ->
         collect_response(id, par, data)
-      %HTTPoison.AsyncHeaders{id: ^id, headers: _} ->
-        collect_response(id, par, data)
-      %HTTPoison.AsyncChunk{id: ^id, chunk: chunk} ->
+      %HTTPotion.AsyncChunk{id: ^id, chunk: chunk} ->
         collect_response(id, par, data <> chunk)
-      %HTTPoison.AsyncEnd{id: ^id} ->
+      %HTTPotion.AsyncEnd{id: ^id} ->
         send par, {:ok, %{status_code: 200, body: data}}
+    end
+  end
+
+  def init_queue do
+    {:ok, connection} = AMQP.Connection.open(host: "queue")
+    {:ok, channel} = AMQP.Channel.open(connection)
+    AMQP.Queue.declare(channel, "test")
+    AMQP.Basic.consume(channel, "test", nil, no_ack: true)
+    IO.puts "now waiting for messages..."
+    Doxir.wait_for_messages
+  end
+
+  def wait_for_messages() do
+    receive do
+      {:basic_deliver, payload, _meta} ->
+        IO.puts " [x] Received #{payload}"
+        %{"language" => language, "script" => script, "username" => username} =
+          Poison.decode!(payload)
+        case language do
+          "js" ->
+            Doxir.exec_node(script, username)
+          "py" ->
+            Doxir.exec_python(script, username)
+          "c" ->
+            Doxir.exec_c(script, username)
+        end
+        wait_for_messages()
     end
   end
 end

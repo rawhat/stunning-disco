@@ -14,7 +14,7 @@ defmodule Doxir.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:amqp],
+      applications: [:amqp, :httpotion],
       extra_applications: [:logger],
       mod: {Doxir.Application, []}
     ]
@@ -23,7 +23,7 @@ defmodule Doxir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:httpoison, "~> 1.0"},
+      {:httpotion, "~> 3.1.0"},
       {:poison, "~> 3.1"},
       {:amqp, "~> 1.0"},
       {:ranch_proxy_protocol, github: "heroku/ranch_proxy_protocol", override: true}

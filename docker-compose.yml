@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-   ui:
+  ui:
     build:
       context: ./ui
       dockerfile: Dockerfile
@@ -31,8 +31,8 @@ services:
       - queue
     volumes:
       - ./backend:/opt/app
-  # db:
-  #   image: postgres
+  db:
+    image: postgres
   queue:
     image: rabbitmq
     ports:

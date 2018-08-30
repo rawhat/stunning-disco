@@ -1,17 +1,17 @@
 import * as React from 'react'
+import * as axios from 'axios'
 import {render} from 'react-dom'
 
 
 class App extends React.Component {
-        constructor(props) {
-                super(props)
+  constructor(props) {
+    super(props)
     this.login = this.login.bind(this)
   }
-  
+
   async componentDidMount() {
-    const res = await fetch('http://localhost:3000/')
-    const body = await res.text()
-    console.log('body is', body)
+    const {data} = await axios.get('http://localhost:3000/')
+    console.log('data is', data)
   }
 
   render() {
@@ -30,15 +30,12 @@ class App extends React.Component {
   async login (e) {
     e.preventDefault()
     const {username, password} = this
-    const res = await fetch('http://localhost:3000/login', {
-        method: "POST", 
-        mode: 'cors',
-        headers: {"Content-Type": "application/json"}, 
-        body: JSON.stringify({username: username.textContent, password: password.textContent}) 
-      })
-    const body = await res.json()
-    console.log('login body is', body)
-  } 
+    const {data} = await axios.post('http://localhost:3000/login', {
+      username: username.value,
+      password: password.value,
+    })
+    console.log('login body is', data)
+  }
 }
 
 render(<App />, document.getElementById('app'))
