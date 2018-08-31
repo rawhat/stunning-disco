@@ -1,6 +1,7 @@
 package main
 
 import (
+  "database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,10 +9,15 @@ import (
   "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
   "github.com/streadway/amqp"
+  _ "github.com/lib/pq"
 )
 
 type ChannelQueue struct {
   channel *amqp.Channel
+}
+
+type Database struct {
+  db *sql.DB
 }
 
 func SayHello(w http.ResponseWriter, r *http.Request) {
@@ -59,13 +65,21 @@ func InitQueue() *amqp.Channel {
   return ch
 }
 
+func InitDb() *Database {
+  connString := "host=db user=postgres dbname=postgres sslmode=disable"
+  db, err := sql.Open("postgres", connString)
+  if err != nil {
+    panic(err)
+  }
+  return &Database{db: db}
+}
+
 func Login(w http.ResponseWriter, r *http.Request) {
 	login := &LoginRequest{}
 	err := json.NewDecoder(r.Body).Decode(&login)
 	if err != nil {
 		panic(err)
 	}
-  fmt.Printf("req is: %v", login)
 	response := &Response{}
 	if login.Username == "username" && login.Password == "password" {
 		response = &Response{Status: 200, Message: "ok"}
@@ -75,6 +89,23 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}
 	json.NewEncoder(w).Encode(response)
+}
+
+func NewUser(w http.ResponseWriter, r *http.Request) {
+  // TODO: change name
+  create := &LoginRequest{}
+  err := json.NewDecoder(r.Body).Decode(&create)
+  if err != nil {
+    panic(err)
+  }
+  response := &Response{}
+  err = database.CreateUser(create.Username, create.Password)
+  if err != nil {
+    response = &Response{Status: 403, Message: "invalid"}
+  } else {
+    response = &Response{Status: 200, Message: "ok"}
+  }
+  json.NewEncoder(w).Encode(response)
 }
 
 func Submit(w http.ResponseWriter, r *http.Request) {
@@ -104,10 +135,19 @@ func Submit(w http.ResponseWriter, r *http.Request) {
   json.NewEncoder(w).Encode(response)
 }
 
+func (db *Database) CreateUser(username string, password string) error {
+  _, err := db.db.Query("INSERT INTO users(username, password) VALUES ($1, $2)", username, password)
+  return err
+}
+
+var database *Database
+
 func main() {
+  database = InitDb()
 	router := mux.NewRouter()
 	router.HandleFunc("/", SayHello)
 	router.HandleFunc("/login", Login)
+  router.HandleFunc("/user/create", NewUser)
   router.HandleFunc("/submit", Submit)
 
   allowedHeaders := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
