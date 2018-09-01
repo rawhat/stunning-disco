@@ -4,6 +4,7 @@ WORKDIR /opt/app
 
 RUN go get -u github.com/gorilla/handlers
 RUN go get -u github.com/gorilla/mux
+RUN go get -u github.com/gorilla/websocket
 RUN go get -u github.com/streadway/amqp
 RUN go get -u github.com/lib/pq
 RUN curl http://entrproject.org/code/entr-4.1.tar.gz -o entr.tar.gz
