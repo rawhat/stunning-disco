@@ -1,5 +1,5 @@
 module.exports = {
-  entry: './index.jsx',
+  entry: './index.tsx',
   output: {
     path: __dirname,
     publicPath: "/",
@@ -8,13 +8,16 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader'
+          loader: 'ts-loader'
         }
       }
     ]
+  },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js']
   },
   devServer: {
     host: '0.0.0.0',

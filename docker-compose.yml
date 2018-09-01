@@ -20,7 +20,6 @@ services:
     volumes:
       - ./api:/opt/app
     depends_on:
-      - ui
       - db
       - queue
   backend:

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "jsx": "react"
+  },
+  "include": [
+    "./**/*",
+    "./component/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

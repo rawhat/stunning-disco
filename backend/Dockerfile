@@ -1,9 +1,13 @@
 FROM elixir:latest
 
-RUN adduser alex
+COPY . /opt/app
 
-USER alex
+WORKDIR /opt/app/doxir
 
-WORKDIR /home/alex
+RUN mix local.hex --force && \
+    mix local.rebar --force
 
-CMD /bin/bash
+RUN mix deps.get
+RUN mix deps.compile
+
+CMD ["mix", "run", "lib/doxir.ex"]

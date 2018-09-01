@@ -30,7 +30,7 @@ defmodule Doxir do
   end
 
   def list_containers do
-    %HTTPotion.Response{body: body} = HTTPoison.get! "#{@containers_url}/json"
+    %HTTPotion.Response{body: body} = HTTPotion.get! "#{@containers_url}/json"
     Poison.decode body
   end
 
@@ -69,6 +69,10 @@ defmodule Doxir do
 
   def push_logs_to_queue(logs, username) do
     IO.puts "done!"
+    {:ok, connection} = AMQP.Connection.open(host: "queue")
+    {:ok, channel} = AMQP.Channel.open(connection)
+    log_response = Poison.encode!(%{username: username, log: logs})
+    AMQP.Basic.publish(channel, "", "logs", log_response)
   end
 
   def parse_script script do
@@ -123,8 +127,9 @@ defmodule Doxir do
   def init_queue do
     {:ok, connection} = AMQP.Connection.open(host: "queue")
     {:ok, channel} = AMQP.Channel.open(connection)
-    AMQP.Queue.declare(channel, "test")
-    AMQP.Basic.consume(channel, "test", nil, no_ack: true)
+    AMQP.Queue.declare(channel, "commands")
+    AMQP.Queue.declare(channel, "logs")
+    AMQP.Basic.consume(channel, "commands", nil, no_ack: true)
     IO.puts "now waiting for messages..."
     Doxir.wait_for_messages
   end
@@ -147,3 +152,5 @@ defmodule Doxir do
     end
   end
 end
+
+Doxir.init_queue

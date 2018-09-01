@@ -10,12 +10,16 @@
   "author": "Alex Manning, Kelly Shiptoski",
   "license": "ISC",
   "dependencies": {
+    "@reach/router": "^1.1.1",
+    "@types/react": "^16.4.13",
     "axios": "^0.18.0",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.0.3"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

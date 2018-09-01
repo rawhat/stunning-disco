@@ -13,7 +13,7 @@ import (
 )
 
 type ChannelQueue struct {
-  channel *amqp.Channel
+  Channel *amqp.Channel
 }
 
 type Database struct {
@@ -40,7 +40,12 @@ type SubmitRequest struct {
   Username string `json:"username"`
 }
 
-func InitQueue() *amqp.Channel {
+type ContainerLog struct {
+  Username string `json:"username"`
+  Log      string `json:"log"`
+}
+
+func InitQueues() *amqp.Channel {
   conn, err := amqp.Dial("amqp://queue/")
   if err != nil {
     panic(err)
@@ -52,7 +57,18 @@ func InitQueue() *amqp.Channel {
   }
   //defer ch.Close()
   _, err = ch.QueueDeclare(
-    "test",
+    "commands",
+    false,
+    false,
+    false,
+    false,
+    nil,
+  )
+  if err != nil {
+    panic(err)
+  }
+  _, err = ch.QueueDeclare(
+    "logs",
     false,
     false,
     false,
@@ -115,24 +131,39 @@ func Submit(w http.ResponseWriter, r *http.Request) {
     panic(err)
   }
   body, err := json.Marshal(submission)
-  if err != nil {
-    panic(err)
-  }
-  queue := InitQueue()
-  err = queue.Publish(
+  channelQueue.SendCommand(body)
+  response := &Response{Status: 200, Message: "ok"}
+  json.NewEncoder(w).Encode(response)
+}
+
+func (queue *ChannelQueue) SendCommand(submission []byte) {
+  err := queue.Channel.Publish(
     "",
-    "test",
+    "commands",
     false,
     false,
     amqp.Publishing {
       ContentType: "application/json",
-      Body:        body,
-  })
+      Body:        submission,
+    },
+  )
   if err != nil {
     panic(err)
   }
-  response := &Response{Status: 200, Message: "ok"}
-  json.NewEncoder(w).Encode(response)
+}
+
+func (queue *ChannelQueue) ListenForLogs() {
+  logs, err := queue.Channel.Consume("", "logs", false, false, false, false, nil)
+  if err != nil {
+    panic(err)
+  }
+  go func() {
+    for log := range logs {
+      response := &ContainerLog{}
+      json.Unmarshal(log.Body, &response)
+      fmt.Printf("got a log: %v", response)
+    }
+  }()
 }
 
 func (db *Database) CreateUser(username string, password string) error {
@@ -141,9 +172,12 @@ func (db *Database) CreateUser(username string, password string) error {
 }
 
 var database *Database
+var channelQueue *ChannelQueue
 
 func main() {
   database = InitDb()
+  channelQueue = &ChannelQueue{Channel: InitQueues()}
+  channelQueue.ListenForLogs()
 	router := mux.NewRouter()
 	router.HandleFunc("/", SayHello)
 	router.HandleFunc("/login", Login)
