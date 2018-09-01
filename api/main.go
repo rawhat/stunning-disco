@@ -12,8 +12,9 @@ import (
   _ "github.com/lib/pq"
 )
 
-type ChannelQueue struct {
-  Channel *amqp.Channel
+type ChannelQueues struct {
+  CommandChannel *amqp.Channel
+  LogChannel     *amqp.Channel
 }
 
 type Database struct {
@@ -45,18 +46,18 @@ type ContainerLog struct {
   Log      string `json:"log"`
 }
 
-func InitQueues() *amqp.Channel {
-  conn, err := amqp.Dial("amqp://queue/")
+func InitQueues() (*amqp.Channel, *amqp.Channel) {
+  conn1, err := amqp.Dial("amqp://queue/")
   if err != nil {
     panic(err)
   }
   //defer conn.Close()
-  ch, err := conn.Channel()
+  commandChannel, err := conn1.Channel()
   if err != nil {
     panic(err)
   }
   //defer ch.Close()
-  _, err = ch.QueueDeclare(
+  _, err = commandChannel.QueueDeclare(
     "commands",
     false,
     false,
@@ -67,7 +68,16 @@ func InitQueues() *amqp.Channel {
   if err != nil {
     panic(err)
   }
-  _, err = ch.QueueDeclare(
+  conn2, err := amqp.Dial("amqp://queue/")
+  if err != nil {
+    panic(err)
+  }
+  //defer conn.Close()
+  logChannel, err := conn2.Channel()
+  if err != nil {
+    panic(err)
+  }
+  _, err = logChannel.QueueDeclare(
     "logs",
     false,
     false,
@@ -78,7 +88,7 @@ func InitQueues() *amqp.Channel {
   if err != nil {
     panic(err)
   }
-  return ch
+  return commandChannel, logChannel
 }
 
 func InitDb() *Database {
@@ -136,8 +146,8 @@ func Submit(w http.ResponseWriter, r *http.Request) {
   json.NewEncoder(w).Encode(response)
 }
 
-func (queue *ChannelQueue) SendCommand(submission []byte) {
-  err := queue.Channel.Publish(
+func (queue *ChannelQueues) SendCommand(submission []byte) {
+  err := queue.CommandChannel.Publish(
     "",
     "commands",
     false,
@@ -152,8 +162,8 @@ func (queue *ChannelQueue) SendCommand(submission []byte) {
   }
 }
 
-func (queue *ChannelQueue) ListenForLogs() {
-  logs, err := queue.Channel.Consume("", "logs", false, false, false, false, nil)
+func (queue *ChannelQueues) ListenForLogs() {
+  logs, err := queue.LogChannel.Consume("", "logs", false, false, false, false, nil)
   if err != nil {
     panic(err)
   }
@@ -172,11 +182,15 @@ func (db *Database) CreateUser(username string, password string) error {
 }
 
 var database *Database
-var channelQueue *ChannelQueue
+var channelQueue *ChannelQueues
 
 func main() {
   database = InitDb()
-  channelQueue = &ChannelQueue{Channel: InitQueues()}
+  commandChannel, logChannel := InitQueues()
+  channelQueue = &ChannelQueues{
+    CommandChannel: commandChannel,
+    LogChannel: logChannel,
+  }
   channelQueue.ListenForLogs()
 	router := mux.NewRouter()
 	router.HandleFunc("/", SayHello)

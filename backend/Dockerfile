@@ -10,4 +10,4 @@ RUN mix local.hex --force && \
 RUN mix deps.get
 RUN mix deps.compile
 
-CMD ["mix", "run", "lib/doxir.ex"]
+CMD ["mix", "run", "lib/doxir/application.ex"]

@@ -5,16 +5,20 @@ defmodule Doxir.Application do
 
   use Application
 
+  @base_url "http://10.0.2.15:2375"
+  @containers_url "#{@base_url}/containers"
+
+  def base_url, do: @base_url
+  def containers_url, do: @containers_url
+
   def start(_type, _args) do
-    # List all child processes to be supervised
     children = [
-      # Starts a worker by calling: Doxir.Worker.start_link(arg)
-      # {Doxir.Worker, arg},
+      {Doxir.LogReader, []}
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Doxir.Supervisor]
     Supervisor.start_link(children, opts)
+    [{pid, _, _, _}] = Supervisor.which_children(Doxir.Supervisor)
+    Doxir.ScriptRunner.start()
   end
 end
