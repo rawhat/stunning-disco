@@ -64,7 +64,7 @@ defmodule Doxir.ScriptRunner do
     id = Poison.decode!(body)
       |> Map.get("Id")
     post_json "#{Doxir.Application.containers_url}/#{id}/start"
-    :timer.sleep(1000)
+    :timer.sleep(5000)
     IO.puts "going to write logs to other gen server"
     GenServer.cast(Doxir.LogReader, {:get_logs, id})
   end

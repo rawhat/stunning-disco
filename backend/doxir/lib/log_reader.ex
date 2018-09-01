@@ -20,12 +20,7 @@ defmodule Doxir.LogReader do
     {:noreply, state}
   end
 
-  def handle_cast({:publish_logs, response}, state) do
-    logs = response
-      |> String.trim
-      |> String.split("\n")
-      |> Enum.map(&(String.slice(&1, 8..-1)))
-      |> Enum.join("\n")
+  def handle_cast({:publish_logs, logs}, state) do
     push_logs_to_queue(logs, "test")
     {:noreply, state}
   end
@@ -41,7 +36,6 @@ defmodule Doxir.LogReader do
   end
 
   def push_logs_to_queue(logs, username) do
-    IO.puts "got logs: #{logs}"
     {:ok, connection} = AMQP.Connection.open(host: "queue")
     {:ok, channel} = AMQP.Channel.open(connection)
     log_response = Poison.encode!(%{username: username, log: logs})
@@ -55,7 +49,18 @@ defmodule Doxir.LogReader do
       %HTTPotion.AsyncChunk{id: ^id, chunk: chunk} ->
         collect_response(id, data <> chunk)
       %HTTPotion.AsyncEnd{id: ^id} ->
-        GenServer.cast(self(), {:publish_logs, data})
+        logs = data
+          |> String.trim
+          |> String.split("\n")
+          |> Enum.map(&(String.slice(&1, 8..-1)))
+          |> Enum.join("\n")
+        if logs == "" do
+          IO.puts "empty logs, retrying"
+          :timer.sleep(1000)
+          read_logs(id)
+        else
+          GenServer.cast(self(), {:publish_logs, logs})
+        end
     end
   end
 end
