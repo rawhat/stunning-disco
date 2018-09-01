@@ -7,5 +7,6 @@ export const Home: React.SFC<RouterProps> = () => (
   <>
     <span>Hello, world!</span>
     <Link to='/login'>Login</Link>
+    <Link to='/coder'>Code!</Link>
   </>
 )

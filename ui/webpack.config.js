@@ -1,4 +1,7 @@
+//const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
+
 module.exports = {
+  devtool: 'source-map',
   entry: './index.tsx',
   output: {
     path: __dirname,
@@ -13,9 +16,16 @@ module.exports = {
         use: {
           loader: 'ts-loader'
         }
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
       }
     ]
   },
+  plugins: [
+    //new MonacoWebpackPlugin()
+  ],
   resolve: {
     extensions: ['.ts', '.tsx', '.js']
   },

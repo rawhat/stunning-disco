@@ -5,6 +5,7 @@ defmodule Doxir.ScriptRunner do
 
   def start do
     pull_images()
+    :timer.sleep(10000)
 
     {:ok, connection} = AMQP.Connection.open(host: "queue")
     {:ok, channel} = AMQP.Channel.open(connection)
