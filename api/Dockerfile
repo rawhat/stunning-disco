@@ -12,4 +12,6 @@ USER docker
 
 WORKDIR /opt/app
 
-CMD /bin/bash
+COPY . .
+
+CMD /sentry

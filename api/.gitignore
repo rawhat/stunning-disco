@@ -1,5 +1,7 @@
 /docs/
 /lib/
 /bin/
+/.crystal/
 /.shards/
 *.dwarf
+webby
