@@ -1,0 +1,17 @@
+name: webby
+version: 0.1.0
+
+authors:
+  - your-name-here <your-email-here>
+
+targets:
+  webby:
+    main: src/webby.cr
+
+crystal: 0.26.1
+
+license: MIT
+
+dependencies:
+  kemal:
+    github: kemalcr/kemal

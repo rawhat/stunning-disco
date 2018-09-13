@@ -1,14 +1,8 @@
-FROM golang:latest
+FROM crystallang/crystal:latest
 
-RUN apt update && apt install -y entr
+RUN apt update && apt install -y curl
 
-WORKDIR /opt/app
-
-RUN go get -u github.com/gorilla/handlers
-RUN go get -u github.com/gorilla/mux
-RUN go get -u github.com/gorilla/websocket
-RUN go get -u github.com/streadway/amqp
-RUN go get -u github.com/lib/pq
+RUN curl -fsSLo- https://raw.githubusercontent.com/samueleaton/sentry/master/install.cr | crystal eval
 
 RUN useradd docker
 RUN chown -R docker /opt/app
@@ -16,7 +10,6 @@ RUN mkdir -p /home/docker
 RUN chown -R docker /home/docker
 USER docker
 
-COPY buildrun.sh .
-COPY auto.sh .
+WORKDIR /opt/app
 
-CMD /opt/app/auto.sh
+CMD /bin/bash
