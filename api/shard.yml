@@ -13,5 +13,9 @@ crystal: 0.26.1
 license: MIT
 
 dependencies:
+  amqp:
+    github: rawhat/amqp.cr
   kemal:
     github: kemalcr/kemal
+  pg:
+    github: will/crystal-pg

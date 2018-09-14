@@ -10,7 +10,9 @@ defmodule Doxir.LogReader do
     {:ok, connection} = AMQP.Connection.open(host: "queue")
     {:ok, channel} = AMQP.Channel.open(connection)
 
+    AMQP.Exchange.declare(channel, "doxir", :direct)
     AMQP.Queue.declare(channel, "logs")
+    AMQP.Queue.bind(channel, "logs", "doxir")
 
     {:ok, %{channel: channel}}
   end
@@ -39,7 +41,8 @@ defmodule Doxir.LogReader do
     {:ok, connection} = AMQP.Connection.open(host: "queue")
     {:ok, channel} = AMQP.Channel.open(connection)
     log_response = Poison.encode!(%{username: username, log: logs})
-    AMQP.Basic.publish(channel, "", "logs", log_response)
+    IO.puts "publishing #{log_response}"
+    AMQP.Basic.publish(channel, "doxir", "logs", log_response)
   end
 
   def collect_response(id, data) do

@@ -4,14 +4,15 @@ RUN apt update && apt install -y curl
 
 RUN curl -fsSLo- https://raw.githubusercontent.com/samueleaton/sentry/master/install.cr | crystal eval
 
-RUN useradd docker
-RUN chown -R docker /opt/app
-RUN mkdir -p /home/docker
-RUN chown -R docker /home/docker
-USER docker
-
 WORKDIR /opt/app
 
-COPY . .
+RUN useradd docker
+RUN chown -R docker /opt/app
+RUN chown docker /sentry
+USER docker
 
-CMD /sentry
+COPY shard.yml .
+
+RUN ln -s /sentry /opt/app/sentry
+
+CMD ./sentry --install
