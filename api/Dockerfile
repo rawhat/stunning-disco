@@ -1,5 +1,7 @@
 FROM golang:latest
 
+RUN apt update && apt install -y entr
+
 WORKDIR /opt/app
 
 RUN go get -u github.com/gorilla/handlers
@@ -7,10 +9,12 @@ RUN go get -u github.com/gorilla/mux
 RUN go get -u github.com/gorilla/websocket
 RUN go get -u github.com/streadway/amqp
 RUN go get -u github.com/lib/pq
-RUN curl http://entrproject.org/code/entr-4.1.tar.gz -o entr.tar.gz
-RUN tar xvfz entr.tar.gz
-RUN cd eradman-entr-f4e2cbe57708 && ./configure && make install
-RUN cd /opt/app
+
+RUN useradd docker
+RUN chown -R docker /opt/app
+RUN mkdir -p /home/docker
+RUN chown -R docker /home/docker
+USER docker
 
 COPY buildrun.sh .
 COPY auto.sh .

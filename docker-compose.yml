@@ -10,6 +10,7 @@ services:
     volumes:
       - ./ui:/opt/app
       - /opt/app/node_modules
+    user: "1000:1000"
   api:
     build:
       context: ./api
@@ -22,6 +23,7 @@ services:
     depends_on:
       - db
       - queue
+    user: "1000:1000"
   backend:
     build:
       context: ./backend
@@ -30,6 +32,7 @@ services:
       - queue
     volumes:
       - ./backend:/opt/app
+    user: "1000:1000"
   db:
     image: postgres
   queue:
