@@ -4,15 +4,12 @@ require "kemal"
 require "pg"
 
 require "./login"
-#require "./queue"
 require "./websocket"
 
 db_url = "postgres://postgres@db:5432"
 db = DB.open(db_url)
 
 ws_users = {} of String => HTTP::WebSocket
-
-#queue_channels = QueueChannels.new
 
 # CORS setup
 before_all do |env|
@@ -73,13 +70,9 @@ post "/submit" do |env|
       puts "CONNECTION CLOSED: #{code} - #{msg}"
     end
     channel = conn.channel
-    exchange = channel.direct("doxir")
-    #exchange = channel.default_exchange
-    #queue = channel.queue("logs")
-    #queue.bind(exchange, queue.name)
+    exchange = channel.direct("commands")
     msg = AMQP::Message.new(submission.to_json)
-    puts "sending message to commands: #{msg.to_s}"
-    exchange.publish(msg, "commands")
+    exchange.publish(msg, "")
     {status: 200, message: "Ok"}
   end
 end
@@ -98,40 +91,23 @@ ws "/coder" do |socket|
   socket.on_close do |_|
     ws_users.delete_if { |_, value| value == socket }
   end
-
-  #if queue = queue_channels.queue
-    #queue.subscribe do |msg|
-      #puts "got msg: #{msg.to_s}"
-    #end
-  #end
-  #AMQP::Connection.start(AMQP::Config.new("queue")) do |conn|
-    #conn.on_close do |code, msg|
-      #puts "CONNECTION CLOSED: #{code} - #{msg}"
-    #end
-    #channel = conn.channel
-    #exchange = channel.direct("doxir")
-    #queue = channel.queue("logs")
-    #queue.bind(exchange, queue.name)
-    #queue.subscribe do |msg|
-      #puts "got msg: #{msg.to_s}"
-    #end
-  #end
 end
 
-AMQP::Connection.start(AMQP::Config.new("queue")) do |conn|
-  conn.on_close do |code, msg|
-    puts "CONNECTION CLOSED: #{code} - #{msg}"
-  end
-  channel = conn.channel
-  exchange = channel.direct("doxir")
-  queue = channel.queue("logs")
-  #exchange.publish(AMQP::Message.new("test"), "logs")
-  queue.subscribe do |msg|
-    puts "got log message: #{msg.to_s}"
-    log = LogResponse.from_json msg.to_s
-    if ws_users[log.username]?
-      ws_users[log.username].send log.log
+spawn do
+  AMQP::Connection.start(AMQP::Config.new("queue")) do |conn|
+    channel = conn.channel
+    exchange = channel.direct("logs")
+    queue = channel.queue("logs")
+    queue.subscribe do |msg|
+      log = LogResponse.from_json msg.to_s
+      if ws_users[log.username]?
+        ws_users[log.username].send log.log
+      end
     end
+    conn.on_close do |code, msg|
+      puts "CONNECTION CLOSED in listener: #{code} - #{msg}"
+    end
+    conn.run_loop
   end
 end
 

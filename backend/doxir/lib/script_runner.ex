@@ -10,11 +10,13 @@ defmodule Doxir.ScriptRunner do
     {:ok, connection} = AMQP.Connection.open(host: "queue")
     {:ok, channel} = AMQP.Channel.open(connection)
 
-    AMQP.Exchange.declare(channel, "doxir", :direct)
-    AMQP.Queue.declare(channel, "commands")
-    AMQP.Queue.bind(channel, "commands", "doxir")
+    AMQP.Exchange.declare(channel, "commands", :direct)
+    {:ok, %{queue: queue_name}} = AMQP.Queue.declare(channel, "")
+    AMQP.Queue.bind(channel, queue_name, "commands")
+    #AMQP.Queue.declare(channel, "commands")
+    #AMQP.Queue.bind(channel, "commands", "doxir")
 
-    AMQP.Basic.consume(channel, "commands", nil, no_ack: true)
+    AMQP.Basic.consume(channel, queue_name, nil, no_ack: true)
     wait_for_messages()
   end
 
