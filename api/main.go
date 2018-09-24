@@ -112,7 +112,7 @@ func InitQueues() (*amqp.Channel, *amqp.Channel) {
 }
 
 func InitDb() *Database {
-	connString := "host=db user=postgres dbname=postgres sslmode=disable"
+	connString := "host=db user=doxir dbname=doxir password=doxir sslmode=disable"
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		panic(err)
@@ -128,7 +128,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response := &Response{}
-	if login.Username == "username" && login.Password == "password" {
+	valid, _ := database.Login(login.Username, login.Password)
+	if valid {
 		response = &Response{Status: 200, Message: "ok"}
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -251,6 +252,17 @@ func (queue *ChannelQueues) ListenForLogs() {
 			}
 		}
 	}()
+}
+
+func (db *Database) Login(username string, password string) (bool, error) {
+	res, err := db.db.Query("SELECT * FROM users where username = $1 and password = $2", username, password)
+	if err != nil {
+		return false, err
+	}
+	if !res.Next() {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (db *Database) CreateUser(username string, password string) error {

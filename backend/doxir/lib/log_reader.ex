@@ -7,12 +7,22 @@ defmodule Doxir.LogReader do
   end
 
   def init(_args) do
-    {:ok, connection} = AMQP.Connection.open(host: "queue")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    AMQP.Queue.declare(channel, "logs")
-
+    channel = connect_to_amqp({})
     {:ok, %{channel: channel}}
+  end
+
+  def connect_to_amqp({:ok, channel}), do: channel
+  def connect_to_amqp(_) do
+    conn = AMQP.Connection.open(host: "queue")
+    case conn do
+      {:ok, connection} ->
+        {:ok, channel} = AMQP.Channel.open(connection)
+        AMQP.Queue.declare(channel, "logs")
+        connect_to_amqp({:ok, channel})
+      _ ->
+        :timer.sleep(1000)
+        connect_to_amqp({:err})
+    end
   end
 
   def handle_cast({:get_logs, id}, state) do

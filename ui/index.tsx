@@ -1,5 +1,4 @@
 import * as React from 'react'
-import {Link} from '@reach/router'
 import {Router} from '@reach/router'
 import {render} from 'react-dom'
 

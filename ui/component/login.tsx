@@ -11,6 +11,7 @@ export class Login extends React.Component<RouterProps> {
   constructor(props) {
     super(props)
     this.login = this.login.bind(this)
+    this.signUp = this.signUp.bind(this)
   }
 
   async componentDidMount() {
@@ -32,6 +33,7 @@ export class Login extends React.Component<RouterProps> {
           />
           <button type="submit">Login</button>
         </form>
+        <button onClick={this.signUp}>Login</button>
       </div>
     )
   }
@@ -44,5 +46,16 @@ export class Login extends React.Component<RouterProps> {
       password: password.value,
     })
     console.log('login body is', data)
+  }
+
+  signUp = (e) => {
+    e.preventDefault()
+    const {username, password} = this
+    axios.post('http://localhost:3000/user/create', {
+      username: username.value,
+      password: password.value,
+    }).then(({data}) =>
+      console.log('create user body is', data)
+    )
   }
 }

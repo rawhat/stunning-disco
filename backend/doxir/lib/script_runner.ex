@@ -7,13 +7,22 @@ defmodule Doxir.ScriptRunner do
     pull_images()
     :timer.sleep(10000)
 
-    {:ok, connection} = AMQP.Connection.open(host: "queue")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    AMQP.Queue.declare(channel, "commands")
-
-    AMQP.Basic.consume(channel, "commands", nil, no_ack: true)
     wait_for_messages()
+  end
+
+  def connect_to_amqp(:ok), do: :ok
+  def connect_to_amqp(_) do
+    conn = AMQP.Connection.open(host: "queue")
+    case conn do
+      {:ok, connection} ->
+        {:ok, channel} = AMQP.Channel.open(connection)
+        AMQP.Queue.declare(channel, "commands")
+        AMQP.Basic.consume(channel, "commands", nil, no_ack: true)
+        connect_to_amqp(:ok)
+      _ ->
+        :timer.sleep(1000)
+        connect_to_amqp(:err)
+    end
   end
 
   def exec_script(language, script, username) do

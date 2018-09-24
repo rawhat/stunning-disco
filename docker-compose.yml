@@ -35,6 +35,10 @@ services:
     user: "1000:1000"
   db:
     image: postgres
+    environment:
+      POSTGRES_DB: doxir
+      POSTGRES_USER: doxir
+      POSTGRES_PASSWORD: doxir
   queue:
     image: rabbitmq
     ports:

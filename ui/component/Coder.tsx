@@ -75,7 +75,8 @@ export class Coder extends React.Component<RouterProps> {
     //this.ws.sendMessage(JSON.stringify({
       //action: ''
     //}))
-    const res = await axios.post('http://localhost:3000/submit', {
+    this.setState({result: ''})
+    await axios.post('http://localhost:3000/submit', {
       language: this.state.language === 'javascript' ? 'js' : 'py',
       script: this.state.code,
       username: 'test',
