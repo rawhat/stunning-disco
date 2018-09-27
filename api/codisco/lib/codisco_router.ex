@@ -1,4 +1,4 @@
-defmodule SimpleServer.Router do
+defmodule Codisco.Router do
   use Plug.Router
   use Plug.Debugger
   require Logger
@@ -10,5 +10,9 @@ defmodule SimpleServer.Router do
 
   get "/" do
     send_resp(conn, 200, "hello, world")
+  end
+
+  get "/*path" do
+    send_resp(conn, 404, "Not found")
   end
 end

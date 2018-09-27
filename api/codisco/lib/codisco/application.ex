@@ -10,7 +10,7 @@ defmodule Codisco.Application do
 
     children = [
       Codisco.Repo,
-      {Plug.Adapters.Cowboy2, scheme: :http, plug: Codisco.Plug, options: [port: 3000]}
+      {Plug.Adapters.Cowboy2, scheme: :http, plug: Codisco.Router, options: [port: 3000]}
     ]
 
     opts = [strategy: :one_for_one, name: Codisco.Supervisor]

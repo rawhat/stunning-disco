@@ -4,7 +4,8 @@ COPY . /opt/app
 
 WORKDIR /opt/app/codisco
 
-RUN useradd docker
+RUN groupadd docker
+RUN useradd -r -u 1000 -g docker docker
 RUN mkdir -p /home/docker
 RUN chown -R docker:docker /opt/app
 RUN chown -R docker:docker /home/docker
@@ -13,8 +14,7 @@ USER docker
 RUN mix local.hex --force && \
     mix local.rebar --force
 
-#RUN mix deps.get
-#RUN mix deps.compile
+RUN mix deps.get
+RUN mix deps.compile
 
-#CMD ["mix", "run", "lib/codisco/application.ex"]
-CMD /bin/bash
+CMD ["mix", "run", "lib/codisco/application.ex"]
