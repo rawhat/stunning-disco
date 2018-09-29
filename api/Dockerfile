@@ -2,7 +2,7 @@ FROM elixir:latest
 
 COPY . /opt/app
 
-WORKDIR /opt/app/codisco
+WORKDIR /opt/app/doxir
 
 RUN groupadd docker
 RUN useradd -r -u 1000 -g docker docker
@@ -17,4 +17,4 @@ RUN mix local.hex --force && \
 RUN mix deps.get
 RUN mix deps.compile
 
-CMD ["mix", "run", "lib/codisco/application.ex"]
+CMD ["mix", "phx.server"]
