@@ -15,19 +15,23 @@ defmodule Codisco.MixProject do
   def application do
     [
       extra_applications: [:logger, :cowboy, :plug, :poison],
-      mod: {Codisco.Application, []}
+      mod: {Codisco.Application, []},
+      #applications: [:amqp],
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:amqp, "~> 1.0"},
       {:cors_plug, "~> 1.5"},
       {:cowboy, "~> 2.4"},
       {:plug, "~> 1.5"},
       {:poison, "~> 3.1"},
       {:ecto, "~> 2.0"},
-      {:postgrex, ">= 0.0.0"}
+      {:postgrex, ">= 0.0.0"},
+      {:ranch, "~> 1.5.0", override: true},
+      {:ranch_proxy_protocol, github: "heroku/ranch_proxy_protocol", override: true}
     ]
   end
 end

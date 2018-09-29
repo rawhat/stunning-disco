@@ -6,5 +6,7 @@ defmodule Codisco.Repo.Migrations.CreateUsers do
       add :username, :string
       add :password, :string
     end
+
+    create unique_index(:users, [:username])
   end
 end

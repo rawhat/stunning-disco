@@ -132,6 +132,8 @@ defmodule Doxir.ScriptRunner do
           Poison.decode!(payload)
         exec_script(language, script, username)
         wait_for_messages()
+      msg ->
+        IO.inspect "got some other message: #{msg}"
     end
   end
 end

@@ -41,21 +41,28 @@ export class Login extends React.Component<RouterProps> {
   async login(e: React.FormEvent) {
     e.preventDefault()
     const {username, password} = this
-    const {data} = await axios.post('http://localhost:3000/login', {
-      username: username.value,
-      password: password.value,
-    })
-    console.log('login body is', data)
+    try {
+      const resp = await axios.post('http://localhost:3000/login', {
+        username: username.value,
+        password: password.value,
+      })
+      console.log('login body is', resp)
+    } catch (err) {
+      console.error('error in login', err)
+    }
   }
 
-  signUp = (e) => {
+  async signUp(e) {
     e.preventDefault()
     const {username, password} = this
-    axios.post('http://localhost:3000/user/create', {
-      username: username.value,
-      password: password.value,
-    }).then(({data}) =>
-      console.log('create user body is', data)
-    )
+    try {
+      const resp = await axios.post('http://localhost:3000/user/create', {
+        username: username.value,
+        password: password.value,
+      })
+      console.log('create user body is', resp)
+    } catch (err) {
+      console.error('error in signup', err)
+    }
   }
 }
