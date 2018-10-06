@@ -14,14 +14,14 @@ defmodule Doxir.Application do
       DoxirWeb.Endpoint,
       # Starts a worker by calling: Doxir.Worker.start_link(arg)
       # {Doxir.Worker, arg},
-      #{Doxir.ScriptExecutor, []},
+      {Doxir.ScriptExecutor, []},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Doxir.Supervisor]
     Supervisor.start_link(children, opts)
-    #Codisco.LogReader.start()
+    Doxir.LogReader.start()
   end
 
   # Tell Phoenix to update the endpoint configuration

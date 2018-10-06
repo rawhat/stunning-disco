@@ -1,4 +1,4 @@
-defmodule Doxir.UserController do
+defmodule DoxirWeb.UserController do
   use DoxirWeb, :controller
 
   def login(conn, params) do
@@ -20,7 +20,15 @@ defmodule Doxir.UserController do
     end
   end
 
-  def create(conn, _params) do
-    conn |> send_resp(200, "Ok")
+  def create(conn, params) do
+    %{"username" => username, "password" => password} = params
+    user = Doxir.User.changeset(%Doxir.User{}, %{username: username, password: password})
+    resp = Doxir.Repo.insert(user)
+    case resp do
+      {:ok, _} ->
+        send_resp(conn, 201, "Created")
+      _ ->
+        send_resp(conn, 409, "Invalid")
+    end
   end
 end

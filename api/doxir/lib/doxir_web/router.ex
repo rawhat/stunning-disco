@@ -5,16 +5,16 @@ defmodule DoxirWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", DoxirWeb do
+  scope "/" do
     pipe_through :api
 
     #options "/", Doxir.CodeController, :options
-    get "/", Doxir.CodeController, :index
+    get "/", DoxirWeb.CodeController, :index
     #options "/login", Doxir.UserController, :options
-    post "/login", Doxir.UserController, :login
+    post "/login", DoxirWeb.UserController, :login
     #options "/user/create", Doxir.UserController, :options
-    post "/user/create", Doxir.UserController, :create
+    post "/user/create", DoxirWeb.UserController, :create
     #options "/submit", Doxir.CodeController, :options
-    post "/submit", Doxir.CodeController, :submit
+    post "/submit", DoxirWeb.CodeController, :submit
   end
 end

@@ -33,6 +33,7 @@ defmodule Doxir.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:amqp, "~> 1.0"},
       {:cors_plug, "~> 1.5"},
       {:phoenix, github: "phoenixframework/phoenix", override: true},
       {:phoenix_pubsub, "~> 1.1"},
@@ -40,7 +41,8 @@ defmodule Doxir.MixProject do
       {:postgrex, ">= 0.0.0"},
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
-      {:cowboy, "~> 1.0"}
+      {:cowboy, "~> 1.0"},
+      {:ranch_proxy_protocol, github: "heroku/ranch_proxy_protocol", override: true}
     ]
   end
 

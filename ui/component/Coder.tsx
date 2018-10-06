@@ -1,11 +1,14 @@
 import * as React from 'react'
+import {Channel} from 'phoenix'
 import {RouterProps} from '@reach/router'
+import {Socket} from 'phoenix'
 import MonacoEditor from 'react-monaco-editor'
 import axios from 'axios'
 
 export class Coder extends React.Component<RouterProps> {
 
-  private ws: WebSocket
+  private channel: Channel
+  private ws: Socket
 
   state = {
     code: '',
@@ -15,9 +18,12 @@ export class Coder extends React.Component<RouterProps> {
 
   constructor(props) {
     super(props)
-    this.ws = new WebSocket('ws://localhost:3000/coder')
-    this.ws.onmessage = this.onMessage
-    this.ws.onopen = this.onOpen
+    this.ws = new Socket('ws://localhost:3000/coder')
+    // TODO: don't hardcode the username
+    this.channel = this.ws.channel("logs:test")
+    this.channel.on("message", this.onMessage)
+    //this.ws.onmessage = this.onMessage
+    //this.ws.onopen = this.onOpen
     this.submitCode = this.submitCode.bind(this)
   }
 
@@ -46,15 +52,15 @@ export class Coder extends React.Component<RouterProps> {
     )
   }
 
-  private onOpen =() => {
-    console.log('it opened')
-    this.ws.send(JSON.stringify({
-      action: 'register',
-      message: {
-        username: 'test'
-      }
-    }))
-  }
+  //private onOpen =() => {
+    //console.log('it opened')
+    //this.ws.send(JSON.stringify({
+      //action: 'register',
+      //message: {
+        //username: 'test'
+      //}
+    //}))
+  //}
 
   private editorDidMount = (editor) => {
     editor.focus()
