@@ -73,6 +73,15 @@ func InitQueues() (*amqp.Channel, *amqp.Channel) {
 	}
 	//defer conn.Close()
 	commandChannel, err := conn1.Channel()
+  err = commandChannel.ExchangeDeclare(
+    "doggo",   // name
+    "fanout", // type
+    true,     // durable
+    false,    // auto-deleted
+    false,    // internal
+    false,    // no-wait
+    nil,      // arguments
+  )
 	if err != nil {
 		panic(err)
 	}
@@ -234,7 +243,7 @@ func (queue *ChannelQueues) SendCommand(submission []byte) {
 }
 
 func (queue *ChannelQueues) ListenForLogs() {
-	logs, err := queue.LogChannel.Consume("", "logs", false, false, false, false, nil)
+	logs, err := queue.LogChannel.Consume("logs", "", false, false, false, false, nil)
 	if err != nil {
 		//panic(err)
 		return

@@ -1,19 +1,22 @@
-FROM elixir:latest
+FROM golang:latest
 
-COPY . /opt/app
+RUN apt update && apt install -y entr
 
-WORKDIR /opt/app/doxir
+WORKDIR /opt/app
+
+RUN go get -u github.com/streadway/amqp
+RUN go get -u github.com/docker/docker/client
+RUN go get -u github.com/docker/docker/api/types
+RUN go get -u github.com/docker/docker/api/types/container
+RUN go get -u golang.org/x/net/context
 
 RUN useradd docker
+RUN chown -R docker /opt/app
 RUN mkdir -p /home/docker
-RUN chown -R docker:docker /opt/app
-RUN chown -R docker:docker /home/docker
+RUN chown -R docker /home/docker
 USER docker
 
-RUN mix local.hex --force && \
-    mix local.rebar --force
+COPY buildrun.sh .
+COPY auto.sh .
 
-RUN mix deps.get
-RUN mix deps.compile
-
-CMD ["mix", "run", "lib/doxir/application.ex"]
+CMD /opt/app/auto.sh
