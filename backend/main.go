@@ -1,7 +1,6 @@
 package main
 
 import (
-  //"bytes"
   "encoding/json"
   "fmt"
   "github.com/docker/docker/api/types"
@@ -9,8 +8,8 @@ import (
   "github.com/docker/docker/client"
 	"github.com/streadway/amqp"
   "golang.org/x/net/context"
-  "io"
-  "os"
+  "io/ioutil"
+  "strings"
 )
 
 type ChannelQueues struct {
@@ -24,6 +23,26 @@ type SubmitRequest struct {
 	Username string `json:"username"`
 }
 
+type ContainerLog struct {
+	Username string `json:"username"`
+	Log      string `json:"log"`
+}
+
+var channelQueue *ChannelQueues
+
+func (r *SubmitRequest) GetScript() string {
+  script := strings.Replace(r.Script, "\"", "\\\"", -1)
+  script = strings.Replace(script, "`", "\\\\`", -1)
+  switch(r.Language) {
+  case "js":
+    return fmt.Sprintf("/bin/echo \"%s\" > runner.js && node runner.js", script)
+  case "py":
+    return fmt.Sprintf("/bin/echo \"%s\" > runner.py && python runner.py", script)
+  default:
+    return ">&2 /bin/echo File extension not supported."
+  }
+}
+
 func InitQueues() (*amqp.Channel, *amqp.Channel) {
 	conn1, err := amqp.Dial("amqp://queue/")
 	if err != nil {
@@ -35,18 +54,11 @@ func InitQueues() (*amqp.Channel, *amqp.Channel) {
 		panic(err)
 	}
 	//defer ch.Close()
-  q, err := commandChannel.QueueDeclare(
-		"commands",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-  err = commandChannel.QueueBind(
-    q.Name,
-    "",
-    "doggo",
+  _, err = commandChannel.QueueDeclare(
+    "commands",
+    false,
+    false,
+    false,
     false,
     nil,
   )
@@ -62,22 +74,39 @@ func InitQueues() (*amqp.Channel, *amqp.Channel) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = logChannel.QueueDeclare(
-		"logs",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
+  _, err = logChannel.QueueDeclare(
+    "logs",
+    false,
+    false,
+    false,
+    false,
+    nil,
+  )
 	if err != nil {
 		panic(err)
 	}
 	return commandChannel, logChannel
 }
 
+func (queue *ChannelQueues) SendLogs(submission []byte) {
+	err := queue.LogChannel.Publish(
+		"",
+		"logs",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        submission,
+		},
+	)
+	if err != nil {
+    panic(err)
+		//return
+	}
+}
+
 func (queue *ChannelQueues) ListenForCommands() {
-	commands, err := queue.LogChannel.Consume("commands", "", false, false, false, false, nil)
+	commands, err := queue.CommandChannel.Consume("commands", "", false, false, false, false, nil)
 	if err != nil {
     panic(err)
 		//return
@@ -97,14 +126,15 @@ func (queue *ChannelQueues) ListenForCommands() {
       switch request.Language {
       case "js":
         img = "node:latest"
-      case "python":
+      case "py":
         img = "python:latest"
       default:
         img = "ubuntu:latest"
       }
       resp, err := cli.ContainerCreate(ctx, &container.Config{
         Image: img,
-        Cmd: []string{"/bin/bash", "-c", request.Script},
+        //Cmd: []string{"/bin/bash", "-c", request.Script},
+        Cmd: []string{"/bin/sh", "-c", request.GetScript()},
         Tty: false,
       }, nil, nil, "")
       if err != nil {
@@ -122,26 +152,32 @@ func (queue *ChannelQueues) ListenForCommands() {
       case msg := <- statusCh:
         fmt.Printf("got a msg: %v", msg)
       }
-      out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+      reader, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStderr: true, ShowStdout: true, Follow: true})
       if err != nil {
         panic(err)
       }
-      fmt.Printf("got some output: %+v\n", out)
-      _, err = io.Copy(os.Stdout, out)
-      if err != nil {
-        panic(err)
+      defer reader.Close()
+      p := make([]byte, 8)
+      reader.Read(p)
+      content, _ := ioutil.ReadAll(reader)
+      fmt.Printf("container log: %s", string(content))
+      log := &ContainerLog{
+        Username: "test",
+        Log: string(content),
       }
+      response, err := json.Marshal(log)
+      channelQueue.SendLogs([]byte(response))
 		}
 	}()
 }
 
 func main() {
   commandChannel, logChannel := InitQueues()
-  queues := &ChannelQueues{
+  channelQueue = &ChannelQueues{
     CommandChannel: commandChannel,
     LogChannel:     logChannel,
   }
-  go queues.ListenForCommands()
-  fmt.Printf("got queues: %v", queues)
+  go channelQueue.ListenForCommands()
+  fmt.Printf("got queues: %v", channelQueue)
   select {}
 }
