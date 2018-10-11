@@ -73,9 +73,6 @@ func InitQueues() (*amqp.Channel, *amqp.Channel) {
 	}
 	//defer conn.Close()
 	commandChannel, err := conn1.Channel()
-	if err != nil {
-		panic(err)
-	}
 	//defer ch.Close()
 	_, err = commandChannel.QueueDeclare(
 		"commands",
@@ -228,19 +225,20 @@ func (queue *ChannelQueues) SendCommand(submission []byte) {
 		},
 	)
 	if err != nil {
-		//panic(err)
-		return
+    panic(err)
+		//return
 	}
 }
 
 func (queue *ChannelQueues) ListenForLogs() {
-	logs, err := queue.LogChannel.Consume("", "logs", false, false, false, false, nil)
+	logs, err := queue.LogChannel.Consume("logs", "", false, false, false, false, nil)
 	if err != nil {
 		//panic(err)
 		return
 	}
 	go func() {
 		for log := range logs {
+      fmt.Printf("got a log")
 			response := &ContainerLog{}
 			json.Unmarshal(log.Body, &response)
 			fmt.Printf("user map is: %v", wsUsers)
