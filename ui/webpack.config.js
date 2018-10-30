@@ -3,6 +3,7 @@
 module.exports = {
   devtool: 'source-map',
   entry: './index.tsx',
+  mode: 'development',
   output: {
     path: __dirname,
     publicPath: "/",

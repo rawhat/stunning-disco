@@ -3,59 +3,41 @@ import {RouterProps} from '@reach/router'
 import axios from 'axios'
 
 
-export class Login extends React.Component<RouterProps> {
+export const Login: React.SFC<RouterProps> = () => {
+  const usernameRef = (React as any).useRef(null)
+  const passwordRef = (React as any).useRef(null)
 
-  private username: HTMLInputElement | undefined
-  private password: HTMLInputElement | undefined
-
-  constructor(props) {
-    super(props)
-    this.login = this.login.bind(this)
-    this.signUp = this.signUp.bind(this)
-  }
-
-  async componentDidMount() {
-    const {data} = await axios.get('http://localhost:3000/')
-    console.log('data is', data)
-  }
-
-  render() {
-    return (
-      <div>
-        <h1>Welcome to the Stunning Disco!</h1>
-        <form onSubmit={this.login}>
-          <input
-            ref={(username) => this.username = username} placeholder="username"
-          />
-          <input
-            ref={(password) => this.password = password} placeholder="password"
-            type='password'
-          />
-          <button type="submit">Login</button>
-        </form>
-        <button onClick={this.signUp}>Login</button>
-      </div>
-    )
-  }
-
-  async login(e: React.FormEvent) {
-    e.preventDefault()
-    const {username, password} = this
-    const {data} = await axios.post('http://localhost:3000/login', {
-      username: username.value,
-      password: password.value,
+  const post = async (path: string, username: string, password: string) => {
+    const {data} = await axios.post(`http://localhost:3000${path}`, {
+      username,
+      password,
     })
-    console.log('login body is', data)
+    console.log('body is', data)
   }
 
-  signUp = (e) => {
+  const login = (e: React.FormEvent) => {
     e.preventDefault()
-    const {username, password} = this
-    axios.post('http://localhost:3000/user/create', {
-      username: username.value,
-      password: password.value,
-    }).then(({data}) =>
-      console.log('create user body is', data)
-    )
+    post('/login',  usernameRef.current.value, passwordRef.current.value)
   }
+
+  const signUp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    post('/user/create',  usernameRef.current.value, passwordRef.current.value)
+  }
+  return (
+    <div>
+      <h1>Welcome to the Stunning Disco!</h1>
+      <form onSubmit={login}>
+        <input
+          ref={usernameRef} placeholder="username"
+        />
+        <input
+          ref={passwordRef} placeholder="password"
+          type='password'
+        />
+        <button type="submit">Login</button>
+      </form>
+      <button onClick={signUp}>Sign Up</button>
+    </div>
+  )
 }
